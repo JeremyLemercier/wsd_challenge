@@ -1,0 +1,55 @@
+---
+- name: Deploy and configure NTPD on target nodes
+  hosts: all
+  become: yes
+
+  tasks:
+    - name: Ensure ntpd is installed
+      ansible.builtin.apt:
+        name: ntp
+        state: present
+        update_cache: yes
+
+    - name: Ensure the drift directory exists
+      ansible.builtin.file:
+        path: /var/lib/ntp
+        state: directory
+        owner: ntp
+        group: ntp
+        mode: '0755'
+
+    - name: Ensure the keys file exists and is configured
+      ansible.builtin.copy:
+        dest: /etc/ntp/keys
+        content: |
+          # NTP authentication keys
+          # Format: key-number type key
+          1 N mysecretkey
+        owner: ntp
+        group: ntp
+        mode: '0600'
+
+    - name: Deploy custom ntpd.conf
+      ansible.builtin.copy:
+        dest: /etc/ntp.conf
+        content: |
+          tinker panic 0
+          restrict default kod nomodify notrap nopeer noquery
+          restrict -6 default kod nomodify notrap nopeer noquery
+          restrict 127.0.0.1
+          restrict -6 ::1
+          server 192.168.0.252 minpoll 4 maxpoll 8
+          server 192.168.0.251 minpoll 4 maxpoll 8
+          server 192.168.0.0 # local clock
+          fudge 192.168.0.0 stratum 10
+          driftfile /var/lib/ntp/drift
+          keys /etc/ntp/keys
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Ensure ntpd is enabled and started
+      ansible.builtin.service:
+        name: ntp
+        state: started
+        enabled: yes
