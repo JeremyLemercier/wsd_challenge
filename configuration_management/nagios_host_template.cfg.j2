@@ -1,0 +1,14 @@
+define host {
+    host_name {{ machine_name }}
+    address {{ machine_ip }}
+    check_command check-ping
+    active_checks_enabled 1
+    passive_checks_enabled 1
+}
+
+define service {
+    service_description ntp_process
+    host_name {{ machine_name }}
+    check_command check_ntp
+    check_interval 10
+}

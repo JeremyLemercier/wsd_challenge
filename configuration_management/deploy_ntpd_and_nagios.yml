@@ -29,14 +29,6 @@
         group: ntp
         mode: '0600'
 
-    - name: Ensure the log directory exists
-      ansible.builtin.file:
-        path: /var/log/ntp
-        state: directory
-        owner: ntp
-        group: ntp
-        mode: '0755'
-
     - name: Deploy custom ntpd.conf
       ansible.builtin.copy:
         dest: /etc/ntp.conf
@@ -46,17 +38,12 @@
           restrict -6 default kod nomodify notrap nopeer noquery
           restrict 127.0.0.1
           restrict -6 ::1
-          server 192.168.0.252 minpoll 4 maxpoll 8 prefer
+          server 192.168.0.252 minpoll 4 maxpoll 8
           server 192.168.0.251 minpoll 4 maxpoll 8
           server 192.168.0.0 # local clock
           fudge 192.168.0.0 stratum 10
           driftfile /var/lib/ntp/drift
           keys /etc/ntp/keys
-          logfile /var/log/ntp/ntp.log
-          statistics loopstats peerstats clockstats
-          filegen loopstats file loopstats type day enable
-          filegen peerstats file peerstats type day enable
-          filegen clockstats file clockstats type day enable
         owner: root
         group: root
         mode: '0644'
@@ -66,3 +53,24 @@
         name: ntp
         state: started
         enabled: yes
+
+- name: Deploy Nagios configurations onto nagios server
+  hosts: monitoring
+  become: yes
+  vars:
+    nagios_config_dir: /etc/nagios/conf.d
+
+  tasks:
+    - name: Create Nagios configuration for each target node
+      ansible.builtin.template:
+        src: nagios_host_template.cfg.j2
+        dest: "{{ nagios_config_dir }}/{{ item }}.cfg"
+      loop: "{{ groups['all'] }}"
+      vars:
+        machine_name: "{{ item }}"
+        machine_ip: "{{ hostvars[item]['ansible_host'] }}"
+
+    - name: Reload Nagios to apply new configurations
+      ansible.builtin.service:
+        name: nagios
+        state: reloaded
