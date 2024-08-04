@@ -1,0 +1,11 @@
+groups:
+  - name: kubernetes-alerts
+    rules:
+      - alert: HighNodeCPUUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 6m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on node {{ $labels.instance }}"
+          description: "CPU usage on node {{ $labels.instance }} is above 80% for more than 5 minutes."
