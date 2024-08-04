@@ -40,20 +40,16 @@ Also, with Xmx set to 1000M and memory usage at 951Mi, the JVM might be performi
 By properly configuring consistency levels, regularly performing maintenance tasks, and maintaining a healthy cluster, you can reduce the probability to get stale reads and achieve more consistent query results in Cassandra.
 
 2) Below all the steps required to shard the collection sanfrancisco.company_name based on _id:
-   1. Connect to the MongoDB cluster
-      mongo
-   
-   2. Enable sharding on the database
-      sh.enableSharding("sanfrancisco")
+   1. Connect to the MongoDB cluster: `mongo`
+   2. Enable sharding on the database: `sh.enableSharding("sanfrancisco")`
+  
+   3. Add the shards:
       
-   3. Add the shards
-      sh.addShard("replicaset_1/mongodb1:27017,mongodb2:27017,mongodb3:27017")
-      sh.addShard("replicaset_2/mongodb4:27017,mongodb5:27017,mongodb6:27017")
+      `sh.addShard("replicaset_1/mongodb1:27017,mongodb2:27017,mongodb3:27017")`
+      `sh.addShard("replicaset_2/mongodb4:27017,mongodb5:27017,mongodb6:27017")`
 
-   4. Shard the collection based on the _id field
-      sh.shardCollection("sanfrancisco.company_name", { "_id": 1 })
+   4. Shard the collection based on the _id field: `sh.shardCollection("sanfrancisco.company_name", { "_id": 1 })`
 
-   5. Verify the sharding status
-      sh.status()
+   5. Verify the sharding status: `sh.status()`
 
 MongoDB will automatically balance the data across the shards.
